@@ -21,23 +21,20 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jorgegprz.greenAda"
+      "package": "com.alvaro.greenAda"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": [
-      "expo-router"
-    ],
+    "plugins": ["expo-router"],
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "d9d3133f-d62e-4869-bceb-f9195dab08f5"
+        "projectId": "4f7b7d49-ee9c-4619-a053-9d7c33d6080e"
       }
-    },
-    "owner": "jorgegprz"
+    }
   }
 }
