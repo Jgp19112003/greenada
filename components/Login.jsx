@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { auth } from "../FirebaseConfig";
+import { auth, sendPasswordResetEmail } from "../FirebaseConfig";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import {
   StyleSheet,
@@ -20,6 +20,7 @@ export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isResetPassword, setIsResetPassword] = useState(false); // New state for reset password
   const router = useRouter();
 
   // Load email from AsyncStorage on mount
@@ -58,6 +59,22 @@ export function Login() {
     return () => unsubscribe();
   }, [router]);
 
+  const resetPassword = async () => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setIsResetPassword(false); // Return to login form
+      alert("¡Enviado!\nRevisa tu correo para restablecer la contraseña.");
+    } catch (error) {
+      if (error?.code === "auth/invalid-email") {
+        alert("El correo electrónico no es válido.");
+      } else if (error?.code === "auth/user-not-found") {
+        alert("No se encontró un usuario con este correo.");
+      } else {
+        alert("Ocurrió un error al intentar restablecer la contraseña.");
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.splashContainer}>
@@ -72,50 +89,95 @@ export function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       router.replace("/buscar");
     } catch (error) {
-      console.error("Error signing in:", error);
+      if (error?.code === "auth/wrong-password") {
+        alert("La contraseña es incorrecta.");
+      } else if (error?.code === "auth/user-not-found") {
+        alert("No se encontró un usuario con este correo.");
+      } else if (error?.code === "auth/invalid-email") {
+        alert("El correo electrónico no es válido.");
+      } else {
+        alert("Ocurrió un error al iniciar sesión.");
+      }
     }
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAwareScrollView
-        style={{ flex: 1, backgroundColor: "black" }}
-        contentContainerStyle={{ flexGrow: 1, backgroundColor: "black" }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.container}>
-          <Image source={require("../assets/logo.png")} style={styles.logo} />
-          <View style={styles.innerContainer}>
-            <Text style={styles.header}>Iniciar Sesión</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
-              keyboardType="email-address"
-              placeholderTextColor="#666"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              secureTextEntry
-              placeholderTextColor="#666"
-              value={password}
-              onChangeText={setPassword}
-            />
-            <Pressable style={styles.button} onPress={signIn}>
-              <Text style={styles.buttonText}>Entrar</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/registro")}
-              style={styles.linkContainer}
-            >
-              <Text style={styles.registrateText}> Regístrate</Text>
-            </Pressable>
+    <>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAwareScrollView
+          style={{ flex: 1, backgroundColor: "black" }}
+          contentContainerStyle={{ flexGrow: 1, backgroundColor: "black" }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Image source={require("../assets/logo.png")} style={styles.logo} />
+            <View style={styles.innerContainer}>
+              {isResetPassword ? (
+                <>
+                  <Text style={styles.header}>Restablecer Contraseña</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Correo electrónico"
+                    keyboardType="email-address"
+                    placeholderTextColor="#666"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                  <Pressable style={styles.button} onPress={resetPassword}>
+                    <Text style={styles.buttonText}>Enviar</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setIsResetPassword(false)}
+                    style={styles.linkContainer}
+                  >
+                    <Text style={styles.linkText}>
+                      Volver al inicio de sesión
+                    </Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.header}>Iniciar Sesión</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Correo electrónico"
+                    keyboardType="email-address"
+                    placeholderTextColor="#666"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Contraseña"
+                    secureTextEntry
+                    placeholderTextColor="#666"
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                  <Pressable style={styles.button} onPress={signIn}>
+                    <Text style={styles.buttonText}>Entrar</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push("/registro")}
+                    style={styles.linkContainer}
+                  >
+                    <Text style={styles.registrateText}> Regístrate</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setIsResetPassword(true)}
+                    style={styles.linkContainer}
+                  >
+                    <Text style={styles.linkText}>
+                      ¿Olvidaste tu contraseña?
+                    </Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </KeyboardAwareScrollView>
-    </TouchableWithoutFeedback>
+        </KeyboardAwareScrollView>
+      </TouchableWithoutFeedback>
+    </>
   );
 }
 
@@ -179,6 +241,7 @@ const styles = StyleSheet.create({
   linkText: {
     color: "#2980b9",
     fontSize: 14,
+    marginTop: 10,
   },
   registrateText: {
     padding: 8,

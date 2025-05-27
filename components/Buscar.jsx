@@ -125,7 +125,10 @@ export function Buscar() {
         }
       }
 
-      setHistory([{ matricula: searchText, etiqueta }, ...history]);
+      setHistory([
+        { matricula: searchText, etiqueta, year: regDate.getFullYear() }, // Add year to history
+        ...history,
+      ]);
     } else {
       Alert.alert(
         "Matrícula no encontrada",
@@ -242,7 +245,9 @@ export function Buscar() {
               cumple con los requisitos para obtener el{" "}
               <Text style={{ fontWeight: "bold" }}>
                 Distintivo Ambiental {item.etiqueta}.
-              </Text>
+              </Text>{" "}
+              Matriculado en{" "}
+              <Text style={{ fontWeight: "bold" }}>{item.year}</Text>.
             </Text>
             <TouchableOpacity onPress={() => deleteHistoryItem(index)}>
               <Text style={styles.deleteIcon}>✖</Text>

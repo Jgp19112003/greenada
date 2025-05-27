@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 
 export function MisVehiculos() {
   const [vehicles, setVehicles] = useState([]);
@@ -60,6 +61,18 @@ export function MisVehiculos() {
     saveVehicles();
   }, [vehicles]);
 
+  // Request permissions to access the gallery
+  React.useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Se requieren permisos para acceder a la galería.");
+      }
+    };
+    requestPermissions();
+  }, []);
+
   const addVehicle = () => {
     if (!matricula || !modelo || !etiqueta) {
       Alert.alert(
@@ -81,6 +94,23 @@ export function MisVehiculos() {
     setEtiqueta("");
     setImageUrl("");
     setModalVisible(false);
+  };
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImageUrl(result.assets[0].uri); // Set the selected image URI
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+    }
   };
 
   return (
@@ -168,12 +198,15 @@ export function MisVehiculos() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TextInput
-              style={styles.input}
-              placeholder="URL de la imagen"
-              value={imageUrl}
-              onChangeText={setImageUrl}
-            />
+            <TouchableOpacity
+              style={styles.pickImageButton}
+              onPress={pickImage}
+            >
+              <Text style={styles.pickImageButtonText}>Seleccionar Imagen</Text>
+            </TouchableOpacity>
+            {imageUrl ? (
+              <Image source={{ uri: imageUrl }} style={styles.previewImage} />
+            ) : null}
             <TouchableOpacity
               style={styles.addVehicleButton}
               onPress={addVehicle}
@@ -330,5 +363,23 @@ const styles = StyleSheet.create({
   addVehicleButtonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  pickImageButton: {
+    backgroundColor: "#0074D9",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  pickImageButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  previewImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+    resizeMode: "cover",
   },
 });
