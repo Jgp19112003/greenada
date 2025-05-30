@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { auth, sendPasswordResetEmail } from "../FirebaseConfig";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+// Importa las dependencias necesarias de React y otras bibliotecas
+import React, { useState, useEffect, useContext } from "react";
+import { auth, sendPasswordResetEmail } from "../FirebaseConfig"; // Importa la configuración de Firebase
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth"; // Métodos de autenticación de Firebase
 import {
   StyleSheet,
   View,
@@ -11,58 +12,67 @@ import {
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+} from "react-native"; // Componentes de React Native
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Almacenamiento asíncrono
+import { useRouter } from "expo-router"; // Enrutador para navegación
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"; // Manejo del teclado en vistas
+import { ThemeContext } from "../app/_layout"; // Contexto para el tema oscuro/claro
 
+// Componente principal de Login
 export function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isResetPassword, setIsResetPassword] = useState(false);
-  const router = useRouter();
+  // Define los estados locales del componente
+  const [email, setEmail] = useState(""); // Estado para el correo electrónico
+  const [password, setPassword] = useState(""); // Estado para la contraseña
+  const [isLoading, setIsLoading] = useState(true); // Estado para mostrar el indicador de carga
+  const [isResetPassword, setIsResetPassword] = useState(false); // Estado para alternar entre login y restablecimiento de contraseña
+  const router = useRouter(); // Hook para manejar la navegación
+  const { isDarkMode } = useContext(ThemeContext); // Obtiene el estado del tema oscuro/claro
 
+  // Efecto para cargar el correo electrónico almacenado
   useEffect(() => {
     const loadEmail = async () => {
       try {
-        const savedEmail = await AsyncStorage.getItem("email");
-        if (savedEmail) setEmail(savedEmail);
+        const savedEmail = await AsyncStorage.getItem("email"); // Obtiene el correo almacenado
+        if (savedEmail) setEmail(savedEmail); // Si existe, lo establece en el estado
       } catch (error) {
-        console.error("Error loading email:", error);
+        console.error("Error loading email:", error); // Manejo de errores
       }
     };
-    loadEmail();
+    loadEmail(); // Llama a la función
   }, []);
 
+  // Efecto para guardar el correo electrónico cuando cambia
   useEffect(() => {
     const saveEmail = async () => {
       try {
-        await AsyncStorage.setItem("email", email);
+        await AsyncStorage.setItem("email", email); // Guarda el correo en el almacenamiento
       } catch (error) {
-        console.error("Error saving email:", error);
+        console.error("Error saving email:", error); // Manejo de errores
       }
     };
-    saveEmail();
-  }, [email]);
+    saveEmail(); // Llama a la función
+  }, [email]); // Se ejecuta cuando cambia el estado "email"
 
+  // Efecto para verificar el estado de autenticación del usuario
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.replace("/buscar");
+        router.replace("/buscar"); // Si el usuario está autenticado, redirige
       } else {
-        setIsLoading(false);
+        setIsLoading(false); // Si no, detiene el indicador de carga
       }
     });
-    return () => unsubscribe();
+    return () => unsubscribe(); // Limpia el listener al desmontar
   }, [router]);
 
+  // Función para restablecer la contraseña
   const resetPassword = async () => {
     try {
-      await sendPasswordResetEmail(auth, email);
-      setIsResetPassword(false);
-      alert("¡Enviado!\nRevisa tu correo para restablecer la contraseña.");
+      await sendPasswordResetEmail(auth, email); // Envía el correo de restablecimiento
+      setIsResetPassword(false); // Cambia al estado de inicio de sesión
+      alert("¡Enviado!\nRevisa tu correo para restablecer la contraseña."); // Muestra un mensaje de éxito
     } catch (error) {
+      // Manejo de errores específicos
       if (error?.code === "auth/invalid-email") {
         alert("El correo electrónico no es válido.");
       } else if (error?.code === "auth/user-not-found") {
@@ -73,6 +83,7 @@ export function Login() {
     }
   };
 
+  // Muestra un indicador de carga si el estado "isLoading" es verdadero
   if (isLoading) {
     return (
       <View style={styles.splashContainer}>
@@ -82,17 +93,13 @@ export function Login() {
     );
   }
 
-  // Pantalla de inicio de sesión de la aplicación.
-  // useState para manejar email y contraseña introducidos por el usuario
-  // Botón que llama a signIn:
-  //   - Verifica credenciales con Firebase Authentication
-  //   - Maneja errores y redirecciona o muestra mensaje en caso de fallo
+  // Función para iniciar sesión
   const signIn = async () => {
-    // Inicia sesión con correo y contraseña
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/buscar");
+      await signInWithEmailAndPassword(auth, email, password); // Intenta iniciar sesión con Firebase
+      router.replace("/buscar"); // Redirige al usuario
     } catch (error) {
+      // Manejo de errores específicos
       if (error?.code === "auth/wrong-password") {
         alert("La contraseña es incorrecta.");
       } else if (error?.code === "auth/user-not-found") {
@@ -105,6 +112,7 @@ export function Login() {
     }
   };
 
+  // Renderiza la interfaz de usuario
   return (
     <>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -113,14 +121,14 @@ export function Login() {
           contentContainerStyle={{ flexGrow: 1, backgroundColor: "black" }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.container}>
+          <View style={[styles.container, isDarkMode && styles.darkContainer]}>
             <Image source={require("../assets/logo.png")} style={styles.logo} />
             <View style={styles.innerContainer}>
               {isResetPassword ? (
                 <>
                   <Text style={styles.header}>Restablecer Contraseña</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
                     placeholder="Correo electrónico"
                     keyboardType="email-address"
                     placeholderTextColor="#666"
@@ -143,7 +151,7 @@ export function Login() {
                 <>
                   <Text style={styles.header}>Iniciar Sesión</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
                     placeholder="Correo electrónico"
                     keyboardType="email-address"
                     placeholderTextColor="#666"
@@ -151,7 +159,7 @@ export function Login() {
                     onChangeText={setEmail}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
                     placeholder="Contraseña"
                     secureTextEntry
                     placeholderTextColor="#666"
@@ -165,7 +173,7 @@ export function Login() {
                     onPress={() => router.push("/registro")}
                     style={styles.linkContainer}
                   >
-                    <Text style={styles.registrateText}> Regístrate</Text>
+                    <Text style={styles.registrateText}>Regístrate</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => setIsResetPassword(true)}
@@ -185,6 +193,7 @@ export function Login() {
   );
 }
 
+// Estilos del componente
 const styles = StyleSheet.create({
   splashContainer: {
     flex: 1,
@@ -198,6 +207,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "black",
     paddingTop: 120,
+  },
+  darkContainer: {
+    backgroundColor: "#333",
   },
   innerContainer: {
     width: "90%",
@@ -223,6 +235,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 15,
     color: "#333",
+  },
+  darkInput: {
+    color: "#fff",
   },
   button: {
     width: "100%",

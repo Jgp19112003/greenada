@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { auth, db } from "../FirebaseConfig";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+// Importa las dependencias necesarias
+import React, { useState, useEffect, useContext } from "react"; // Importa React y hooks
+import { auth, db } from "../FirebaseConfig"; // Importa la configuración de Firebase
+import { createUserWithEmailAndPassword } from "firebase/auth"; // Método para registrar usuarios en Firebase Authentication
+import { doc, setDoc } from "firebase/firestore"; // Métodos para interactuar con Firestore
 import {
   StyleSheet,
   View,
@@ -11,113 +12,130 @@ import {
   Image,
   Keyboard,
   TouchableWithoutFeedback,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+} from "react-native"; // Componentes de React Native
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Almacenamiento local
+import { useRouter } from "expo-router"; // Enrutador para navegación
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"; // Manejo del teclado en vistas
+import { ThemeContext } from "../app/_layout"; // Contexto para el tema oscuro/claro
 
-// Pantalla/formulario para registrar nuevos usuarios en la aplicación.
+// Componente principal para registrar nuevos usuarios
 export function Registro() {
-  const router = useRouter();
-  // useState para manejar los campos de registro (email, contraseña, etc.)
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter(); // Hook para manejar la navegación
+  const { isDarkMode } = useContext(ThemeContext); // Obtiene el estado del tema oscuro/claro
 
+  // Estados locales para manejar los datos del formulario
+  const [email, setEmail] = useState(""); // Estado para el correo electrónico
+  const [password, setPassword] = useState(""); // Estado para la contraseña
+  const [nombre, setNombre] = useState(""); // Estado para el nombre del usuario
+  const [telefono, setTelefono] = useState(""); // Estado para el teléfono del usuario
+  const [isSubmitting, setIsSubmitting] = useState(false); // Estado para evitar múltiples envíos
+
+  // useEffect para cargar datos del usuario desde AsyncStorage al iniciar el componente
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const savedNombre = await AsyncStorage.getItem("nombre");
-        const savedTelefono = await AsyncStorage.getItem("telefono");
-        if (savedNombre) setNombre(savedNombre);
-        if (savedTelefono) setTelefono(savedTelefono);
+        const savedNombre = await AsyncStorage.getItem("nombre"); // Obtiene el nombre almacenado
+        const savedTelefono = await AsyncStorage.getItem("telefono"); // Obtiene el teléfono almacenado
+        if (savedNombre) setNombre(savedNombre); // Si existe, lo establece en el estado
+        if (savedTelefono) setTelefono(savedTelefono); // Si existe, lo establece en el estado
       } catch (error) {
-        console.error("Error loading user data:", error);
+        console.error("Error loading user data:", error); // Manejo de errores
       }
     };
-    loadUserData();
+    loadUserData(); // Llama a la función para cargar los datos
   }, []);
 
+  // useEffect para guardar datos del usuario en AsyncStorage cuando cambian
   useEffect(() => {
     const saveUserData = async () => {
       try {
-        await AsyncStorage.setItem("nombre", nombre);
-        await AsyncStorage.setItem("telefono", telefono);
+        await AsyncStorage.setItem("nombre", nombre); // Guarda el nombre en el almacenamiento
+        await AsyncStorage.setItem("telefono", telefono); // Guarda el teléfono en el almacenamiento
       } catch (error) {
-        console.error("Error saving user data:", error);
+        console.error("Error saving user data:", error); // Manejo de errores
       }
     };
-    saveUserData();
-  }, [nombre, telefono]);
+    saveUserData(); // Llama a la función para guardar los datos
+  }, [nombre, telefono]); // Se ejecuta cuando cambian los estados "nombre" o "telefono"
 
-  // Botón que al pulsarse llama a la función signUp:
-  //   - Crea el usuario en Firebase Authentication
-  //   - Almacena datos complementarios en Firestore si es necesario
-  //   - Maneja validaciones y posibles errores
+  // Función para registrar un nuevo usuario
   const signUp = async () => {
-    // Crea un usuario en Firebase Authentication y asocia los datos en Firestore
+    // Evita múltiples envíos si ya se está procesando
     if (isSubmitting) return;
-    setIsSubmitting(true);
+    setIsSubmitting(true); // Establece el estado de envío en verdadero
     try {
+      // Crea un nuevo usuario en Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      const user = userCredential.user;
+      const user = userCredential.user; // Obtiene el usuario creado
+      // Guarda datos adicionales del usuario en Firestore
       await setDoc(doc(db, "usuarios", user.uid), { nombre, telefono, email });
-      router.replace("/buscar");
+      router.replace("/buscar"); // Redirige al usuario a la página principal
     } catch (error) {
-      console.error("Error registrando usuario:", error);
-      setIsSubmitting(false);
+      console.error("Error registrando usuario:", error); // Manejo de errores
+      setIsSubmitting(false); // Restablece el estado de envío
     }
   };
 
+  // Renderiza la interfaz de usuario
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      {" "}
+      {/* Oculta el teclado al tocar fuera */}
       <KeyboardAwareScrollView
-        style={{ flex: 1, backgroundColor: "black" }}
+        style={{ flex: 1, backgroundColor: "black" }} // Estilo del contenedor
         contentContainerStyle={{ flexGrow: 1, backgroundColor: "black" }}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="handled" // Permite que los toques pasen al teclado
       >
-        <View style={styles.container}>
-          {/* Logo image */}
+        <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+          {" "}
+          {/* Contenedor principal */}
+          {/* Logo de la aplicación */}
           <Image source={require("../assets/logo.png")} style={styles.logo} />
           <View style={styles.innerContainer}>
-            <Text style={styles.header}>Registro</Text>
+            {" "}
+            {/* Contenedor interno */}
+            <Text style={styles.header}>Registro</Text>{" "}
+            {/* Título del formulario */}
+            {/* Campo de entrada para el nombre */}
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.darkInput]}
               placeholder="Nombre"
               placeholderTextColor="#666"
               value={nombre}
               onChangeText={setNombre}
             />
+            {/* Campo de entrada para el teléfono */}
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.darkInput]}
               placeholder="Teléfono"
               keyboardType="phone-pad"
               placeholderTextColor="#666"
               value={telefono}
               onChangeText={setTelefono}
             />
+            {/* Campo de entrada para el correo electrónico */}
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.darkInput]}
               placeholder="Correo electrónico"
               keyboardType="email-address"
               placeholderTextColor="#666"
               value={email}
               onChangeText={setEmail}
             />
+            {/* Campo de entrada para la contraseña */}
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.darkInput]}
               placeholder="Contraseña"
               secureTextEntry
               placeholderTextColor="#666"
               value={password}
               onChangeText={setPassword}
             />
+            {/* Botón para enviar el formulario */}
             <Pressable style={styles.button} onPress={signUp}>
               <Text style={styles.buttonText}>Registrarse</Text>
             </Pressable>
@@ -128,6 +146,7 @@ export function Registro() {
   );
 }
 
+// Estilos del componente
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -135,6 +154,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "black",
     paddingTop: 120,
+  },
+  darkContainer: {
+    backgroundColor: "#333",
   },
   innerContainer: {
     width: "90%",
@@ -160,6 +182,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 15,
     color: "#333",
+  },
+  darkInput: {
+    color: "#fff",
   },
   button: {
     width: "100%",

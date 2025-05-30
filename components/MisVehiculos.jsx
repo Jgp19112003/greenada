@@ -1,3 +1,4 @@
+// Importa los componentes y módulos necesarios
 import {
   StyleSheet,
   Text,
@@ -9,18 +10,23 @@ import {
   ScrollView,
   Pressable,
   Alert,
-} from "react-native";
-import React, { useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
-export function MisVehiculos() {
-  const [vehicles, setVehicles] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [matricula, setMatricula] = useState("");
-  const [modelo, setModelo] = useState("");
-  const [etiqueta, setEtiqueta] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+} from "react-native"; // Componentes de React Native
+import React, { useState, useContext } from "react"; // Importa React y hooks
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Almacenamiento local
+import * as ImagePicker from "expo-image-picker"; // Selector de imágenes
+import { ThemeContext } from "../app/_layout"; // Contexto para el tema oscuro/claro
 
+// Componente principal para gestionar los vehículos
+export function MisVehiculos() {
+  const { isDarkMode } = useContext(ThemeContext); // Obtiene el estado del tema oscuro/claro
+  const [vehicles, setVehicles] = useState([]); // Estado para la lista de vehículos
+  const [modalVisible, setModalVisible] = useState(false); // Estado para mostrar/ocultar el modal
+  const [matricula, setMatricula] = useState(""); // Estado para la matrícula del vehículo
+  const [modelo, setModelo] = useState(""); // Estado para el modelo del vehículo
+  const [etiqueta, setEtiqueta] = useState(""); // Estado para la etiqueta ambiental
+  const [imageUrl, setImageUrl] = useState(""); // Estado para la URL de la imagen del vehículo
+
+  // Lista de etiquetas ambientales con sus imágenes correspondientes
   const etiquetas = [
     { name: "0", image: require("../assets/distintivo_0.png") },
     { name: "B", image: require("../assets/distintivo_B.png") },
@@ -30,125 +36,158 @@ export function MisVehiculos() {
   ];
 
   React.useEffect(() => {
-    // Comentario detallado: useEffect para cargar los vehículos guardados en AsyncStorage cuando inicia el componente
+    // Carga los vehículos guardados en AsyncStorage al iniciar el componente
     const loadVehicles = async () => {
       try {
-        const savedVehicles = await AsyncStorage.getItem("vehicles");
+        const savedVehicles = await AsyncStorage.getItem("vehicles"); // Obtiene los vehículos almacenados
         if (savedVehicles) {
           const parsedVehicles = JSON.parse(savedVehicles).map((vehicle) => ({
             ...vehicle,
-            image: vehicle.image || "default",
+            image: vehicle.image || "default", // Asigna una imagen por defecto si no tiene
           }));
-          setVehicles(parsedVehicles);
+          setVehicles(parsedVehicles); // Actualiza el estado con los vehículos cargados
         }
       } catch (error) {
-        console.error("Error loading vehicles:", error);
+        console.error("Error loading vehicles:", error); // Manejo de errores
       }
     };
-    loadVehicles();
+    loadVehicles(); // Llama a la función para cargar los vehículos
   }, []);
 
   React.useEffect(() => {
-    // Comentario detallado: useEffect para actualizar AsyncStorage cada vez que cambia el array 'vehicles'
+    // Guarda los vehículos en AsyncStorage cada vez que cambian
     const saveVehicles = async () => {
       try {
-        await AsyncStorage.setItem("vehicles", JSON.stringify(vehicles));
+        await AsyncStorage.setItem("vehicles", JSON.stringify(vehicles)); // Guarda los vehículos en formato JSON
       } catch (error) {
-        console.error("Error saving vehicles:", error);
+        console.error("Error saving vehicles:", error); // Manejo de errores
       }
     };
-    saveVehicles();
-  }, [vehicles]);
+    saveVehicles(); // Llama a la función para guardar los vehículos
+  }, [vehicles]); // Se ejecuta cuando cambia el estado "vehicles"
 
   React.useEffect(() => {
-    // Comentario detallado: requestPermissions solicita permiso para acceder a la galería a través de ImagePicker
+    // Solicita permisos para acceder a la galería de imágenes
     const requestPermissions = async () => {
       const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        await ImagePicker.requestMediaLibraryPermissionsAsync(); // Solicita permisos
       if (status !== "granted") {
-        alert("Se requieren permisos para acceder a la galería.");
+        alert("Se requieren permisos para acceder a la galería."); // Muestra un mensaje si no se otorgan permisos
       }
     };
-    requestPermissions();
+    requestPermissions(); // Llama a la función para solicitar permisos
   }, []);
 
   const addVehicle = () => {
-    // Comentario detallado: addVehicle valida campos y agrega un nuevo vehículo a la lista, incluyendo matrícula, modelo y etiqueta
+    // Valida los campos y agrega un nuevo vehículo a la lista
     if (!matricula || !modelo || !etiqueta) {
       Alert.alert(
         "Error",
-        "Por favor, completa todos los campos obligatorios."
+        "Por favor, completa todos los campos obligatorios." // Muestra un mensaje de error si faltan campos
       );
       return;
     }
 
     const newVehicle = {
-      matricula,
-      modelo,
-      etiqueta,
-      image: imageUrl || "default",
+      matricula, // Asigna la matrícula ingresada
+      modelo, // Asigna el modelo ingresado
+      etiqueta, // Asigna la etiqueta seleccionada
+      image: imageUrl || "default", // Asigna la imagen seleccionada o una por defecto
     };
-    setVehicles([...vehicles, newVehicle]);
-    setMatricula("");
-    setModelo("");
-    setEtiqueta("");
-    setImageUrl("");
-    setModalVisible(false);
+    setVehicles([...vehicles, newVehicle]); // Agrega el nuevo vehículo al estado
+    setMatricula(""); // Limpia el campo de matrícula
+    setModelo(""); // Limpia el campo de modelo
+    setEtiqueta(""); // Limpia la etiqueta seleccionada
+    setImageUrl(""); // Limpia la URL de la imagen
+    setModalVisible(false); // Cierra el modal
   };
 
   const pickImage = async () => {
-    // Comentario detallado: pickImage lanza la galería y devuelve la URI de la imagen seleccionada
+    // Abre la galería para seleccionar una imagen
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Permite solo imágenes
+        allowsEditing: true, // Permite editar la imagen
+        aspect: [4, 3], // Relación de aspecto
+        quality: 1, // Calidad de la imagen
       });
 
       if (!result.canceled) {
-        setImageUrl(result.assets[0].uri);
+        setImageUrl(result.assets[0].uri); // Asigna la URI de la imagen seleccionada
       }
     } catch (error) {
-      console.error("Error picking image:", error);
+      console.error("Error picking image:", error); // Manejo de errores
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+      {/* Si no hay vehículos, muestra un mensaje */}
       {vehicles.length === 0 ? (
-        <Text style={styles.noVehiclesText}>Aún no tienes vehículos</Text>
+        <Text
+          style={[
+            styles.noVehiclesText,
+            isDarkMode && styles.darkNoVehiclesText,
+          ]}
+        >
+          Aún no tienes vehículos
+        </Text>
       ) : (
+        // Si hay vehículos, los muestra en una lista
         <ScrollView style={styles.vehicleList}>
           {vehicles.map((vehicle, index) => (
-            <View key={index} style={styles.vehicleCard}>
+            <View
+              key={index}
+              style={[styles.vehicleCard, isDarkMode && styles.darkVehicleCard]}
+            >
+              {/* Botón para eliminar un vehículo */}
               <TouchableOpacity
                 style={styles.deleteIconContainer}
                 onPress={() =>
                   setVehicles(
-                    vehicles.filter((_, vehicleIndex) => vehicleIndex !== index)
+                    vehicles.filter((_, vehicleIndex) => vehicleIndex !== index) // Filtra y elimina el vehículo seleccionado
                   )
                 }
               >
-                <Text style={styles.deleteIcon}>✖</Text>
+                <Text
+                  style={[
+                    styles.deleteIcon,
+                    isDarkMode && styles.darkDeleteIcon,
+                  ]}
+                >
+                  ✖
+                </Text>
               </TouchableOpacity>
+              {/* Imagen del vehículo */}
               <Image
                 source={
                   vehicle.image === "default"
-                    ? require("../assets/unknown_car.png")
-                    : { uri: vehicle.image }
+                    ? require("../assets/unknown_car.png") // Imagen por defecto
+                    : { uri: vehicle.image } // Imagen seleccionada
                 }
                 style={styles.vehicleImage}
               />
+              {/* Información del vehículo */}
               <View style={styles.vehicleInfo}>
-                <Text style={styles.vehicleText}>
+                <Text
+                  style={[
+                    styles.vehicleText,
+                    isDarkMode && styles.darkVehicleText,
+                  ]}
+                >
                   <Text style={styles.boldText}>Matrícula:</Text>{" "}
                   {vehicle.matricula}
                 </Text>
-                <Text style={styles.vehicleText}>
+                <Text
+                  style={[
+                    styles.vehicleText,
+                    isDarkMode && styles.darkVehicleText,
+                  ]}
+                >
                   <Text style={styles.boldText}>Modelo:</Text> {vehicle.modelo}
                 </Text>
               </View>
+              {/* Imagen de la etiqueta ambiental */}
               <Image
                 source={
                   etiquetas.find((et) => et.name === vehicle.etiqueta)?.image
@@ -159,28 +198,41 @@ export function MisVehiculos() {
           ))}
         </ScrollView>
       )}
+      {/* Botón para agregar un nuevo vehículo */}
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton, isDarkMode && styles.darkAddButton]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.addButtonText}>+</Text>
+        <Text
+          style={[styles.addButtonText, isDarkMode && styles.darkAddButtonText]}
+        >
+          +
+        </Text>
       </TouchableOpacity>
 
+      {/* Modal para agregar un nuevo vehículo */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <Pressable
           style={styles.modalBackground}
           onPress={() => setModalVisible(false)}
         >
-          <View style={styles.modalContainer}>
+          <View
+            style={[
+              styles.modalContainer,
+              isDarkMode && styles.darkModalContainer,
+            ]}
+          >
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.darkInput]}
               placeholder="Matrícula"
+              placeholderTextColor={isDarkMode ? "#aaa" : "#666"}
               value={matricula}
               onChangeText={(text) => setMatricula(text.toUpperCase())}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.darkInput]}
               placeholder="Modelo de coche"
+              placeholderTextColor={isDarkMode ? "#aaa" : "#666"}
               value={modelo}
               onChangeText={setModelo}
             />
@@ -195,24 +247,51 @@ export function MisVehiculos() {
                   ]}
                 >
                   <Image source={et.image} style={styles.etiquetaImage} />
-                  <Text style={styles.etiquetaText}>{et.name}</Text>
+                  <Text
+                    style={[
+                      styles.etiquetaText,
+                      isDarkMode && styles.darkEtiquetaText,
+                    ]}
+                  >
+                    {et.name}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
             <TouchableOpacity
-              style={styles.pickImageButton}
+              style={[
+                styles.pickImageButton,
+                isDarkMode && styles.darkPickImageButton,
+              ]}
               onPress={pickImage}
             >
-              <Text style={styles.pickImageButtonText}>Seleccionar Imagen</Text>
+              <Text
+                style={[
+                  styles.pickImageButtonText,
+                  isDarkMode && styles.darkPickImageButtonText,
+                ]}
+              >
+                Seleccionar Imagen
+              </Text>
             </TouchableOpacity>
             {imageUrl ? (
               <Image source={{ uri: imageUrl }} style={styles.previewImage} />
             ) : null}
             <TouchableOpacity
-              style={styles.addVehicleButton}
+              style={[
+                styles.addVehicleButton,
+                isDarkMode && styles.darkAddVehicleButton,
+              ]}
               onPress={addVehicle}
             >
-              <Text style={styles.addVehicleButtonText}>Agregar</Text>
+              <Text
+                style={[
+                  styles.addVehicleButtonText,
+                  isDarkMode && styles.darkAddVehicleButtonText,
+                ]}
+              >
+                Agregar
+              </Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -221,11 +300,15 @@ export function MisVehiculos() {
   );
 }
 
+// Estilos del componente
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: "#fff",
+  },
+  darkContainer: {
+    backgroundColor: "#333",
   },
   noVehiclesText: {
     flex: 1,
@@ -233,6 +316,9 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     fontSize: 18,
     color: "gray",
+  },
+  darkNoVehiclesText: {
+    color: "#aaa",
   },
   vehicleList: {
     flex: 1,
@@ -247,6 +333,10 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     position: "relative",
   },
+  darkVehicleCard: {
+    backgroundColor: "#222",
+    borderColor: "#444",
+  },
   deleteIconContainer: {
     position: "absolute",
     bottom: 5,
@@ -256,10 +346,15 @@ const styles = StyleSheet.create({
   deleteIcon: {
     fontSize: 18,
     color: "red",
-    backgroundColor: "#fff",
+    // Cambiado el fondo para que coincida con el fondo de la tarjeta
+    backgroundColor: "transparent",
     borderRadius: 10,
     padding: 2,
     overflow: "hidden",
+  },
+  darkDeleteIcon: {
+    color: "#f55",
+    backgroundColor: "transparent", // Coincide con el fondo oscuro de la tarjeta
   },
   vehicleImage: {
     width: 80,
@@ -276,6 +371,10 @@ const styles = StyleSheet.create({
   vehicleText: {
     fontSize: 14,
     marginBottom: 5,
+    color: "#333",
+  },
+  darkVehicleText: {
+    color: "#fff",
   },
   boldText: {
     fontWeight: "bold",
@@ -299,10 +398,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  darkAddButton: {
+    backgroundColor: "#00509e",
+  },
   addButtonText: {
     color: "#fff",
     fontSize: 30,
     fontWeight: "bold",
+  },
+  darkAddButtonText: {
+    color: "#ddd",
   },
   modalBackground: {
     flex: 1,
@@ -316,6 +421,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "90%",
   },
+  darkModalContainer: {
+    backgroundColor: "#222",
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -323,6 +431,11 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     fontSize: 16,
+    color: "#000",
+  },
+  darkInput: {
+    borderColor: "#555",
+    color: "#fff",
   },
   etiquetaSelector: {
     flexDirection: "row",
@@ -354,6 +467,10 @@ const styles = StyleSheet.create({
   etiquetaText: {
     fontSize: 10,
     textAlign: "center",
+    color: "#000",
+  },
+  darkEtiquetaText: {
+    color: "#fff",
   },
   addVehicleButton: {
     backgroundColor: "#001f3f",
@@ -361,9 +478,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
   },
+  darkAddVehicleButton: {
+    backgroundColor: "#003366",
+  },
   addVehicleButtonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  darkAddVehicleButtonText: {
+    color: "#ddd",
   },
   pickImageButton: {
     backgroundColor: "#0074D9",
@@ -372,16 +495,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  darkPickImageButton: {
+    backgroundColor: "#00509e",
+  },
   pickImageButtonText: {
     color: "#fff",
     fontSize: 16,
   },
-  previewImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
-    resizeMode: "cover",
+  darkPickImageButtonText: {
+    color: "#ddd",
   },
 });
 
