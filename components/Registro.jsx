@@ -16,15 +16,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
+// Pantalla/formulario para registrar nuevos usuarios en la aplicación.
 export function Registro() {
   const router = useRouter();
+  // useState para manejar los campos de registro (email, contraseña, etc.)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load user data from AsyncStorage on mount
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -39,7 +40,6 @@ export function Registro() {
     loadUserData();
   }, []);
 
-  // Save user data to AsyncStorage whenever it changes
   useEffect(() => {
     const saveUserData = async () => {
       try {
@@ -52,7 +52,12 @@ export function Registro() {
     saveUserData();
   }, [nombre, telefono]);
 
+  // Botón que al pulsarse llama a la función signUp:
+  //   - Crea el usuario en Firebase Authentication
+  //   - Almacena datos complementarios en Firestore si es necesario
+  //   - Maneja validaciones y posibles errores
   const signUp = async () => {
+    // Crea un usuario en Firebase Authentication y asocia los datos en Firestore
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
@@ -177,3 +182,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
+
+// Comentario detallado: El formulario recoge datos como email y contraseña, y los registra
+// en Firebase Authentication, guardando información adicional en Firestore si fuese necesario.

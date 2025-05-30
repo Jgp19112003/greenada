@@ -11,10 +11,15 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 
+// Componente que muestra un mapa o imagen de la ZBE (Zona de Bajas Emisiones).
+// Puede incluir un botón o enlace a Google Maps u otra funcionalidad
+//   para abrir la ubicación exacta de la ZBE
+
 export function Mapa() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const openGoogleMaps = () => {
+    // Abre la ubicación de Granada en Google Maps
     Linking.openURL("https://www.google.com/maps?q=Granada");
   };
 
@@ -161,3 +166,6 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
 });
+
+// Comentario detallado: Aquí se renderiza la imagen o mapa interactivo de la ZBE, con botones
+// para mostrar información adicional, enlaces a Google Maps, etc.

@@ -12,8 +12,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
-
+import * as ImagePicker from "expo-image-picker";
 export function MisVehiculos() {
   const [vehicles, setVehicles] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,15 +29,15 @@ export function MisVehiculos() {
     { name: "Sin", image: require("../assets/distintivo_sin.png") },
   ];
 
-  // Load vehicles from AsyncStorage on component mount
   React.useEffect(() => {
+    // Comentario detallado: useEffect para cargar los vehículos guardados en AsyncStorage cuando inicia el componente
     const loadVehicles = async () => {
       try {
         const savedVehicles = await AsyncStorage.getItem("vehicles");
         if (savedVehicles) {
           const parsedVehicles = JSON.parse(savedVehicles).map((vehicle) => ({
             ...vehicle,
-            image: vehicle.image || "default", // Assign "default" if no image is present
+            image: vehicle.image || "default",
           }));
           setVehicles(parsedVehicles);
         }
@@ -49,8 +48,8 @@ export function MisVehiculos() {
     loadVehicles();
   }, []);
 
-  // Save vehicles to AsyncStorage whenever the vehicles state changes
   React.useEffect(() => {
+    // Comentario detallado: useEffect para actualizar AsyncStorage cada vez que cambia el array 'vehicles'
     const saveVehicles = async () => {
       try {
         await AsyncStorage.setItem("vehicles", JSON.stringify(vehicles));
@@ -61,8 +60,8 @@ export function MisVehiculos() {
     saveVehicles();
   }, [vehicles]);
 
-  // Request permissions to access the gallery
   React.useEffect(() => {
+    // Comentario detallado: requestPermissions solicita permiso para acceder a la galería a través de ImagePicker
     const requestPermissions = async () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -74,6 +73,7 @@ export function MisVehiculos() {
   }, []);
 
   const addVehicle = () => {
+    // Comentario detallado: addVehicle valida campos y agrega un nuevo vehículo a la lista, incluyendo matrícula, modelo y etiqueta
     if (!matricula || !modelo || !etiqueta) {
       Alert.alert(
         "Error",
@@ -86,7 +86,7 @@ export function MisVehiculos() {
       matricula,
       modelo,
       etiqueta,
-      image: imageUrl || "default", // Use "default" as a placeholder identifier
+      image: imageUrl || "default",
     };
     setVehicles([...vehicles, newVehicle]);
     setMatricula("");
@@ -97,6 +97,7 @@ export function MisVehiculos() {
   };
 
   const pickImage = async () => {
+    // Comentario detallado: pickImage lanza la galería y devuelve la URI de la imagen seleccionada
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -106,7 +107,7 @@ export function MisVehiculos() {
       });
 
       if (!result.canceled) {
-        setImageUrl(result.assets[0].uri); // Set the selected image URI
+        setImageUrl(result.assets[0].uri);
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -134,7 +135,7 @@ export function MisVehiculos() {
               <Image
                 source={
                   vehicle.image === "default"
-                    ? require("../assets/unknown_car.png") // Handle default image
+                    ? require("../assets/unknown_car.png")
                     : { uri: vehicle.image }
                 }
                 style={styles.vehicleImage}
@@ -175,7 +176,7 @@ export function MisVehiculos() {
               style={styles.input}
               placeholder="Matrícula"
               value={matricula}
-              onChangeText={(text) => setMatricula(text.toUpperCase())} // Convert to uppercase
+              onChangeText={(text) => setMatricula(text.toUpperCase())}
             />
             <TextInput
               style={styles.input}
@@ -248,8 +249,8 @@ const styles = StyleSheet.create({
   },
   deleteIconContainer: {
     position: "absolute",
-    bottom: 5, // Move to the bottom
-    right: 5, // Align to the right
+    bottom: 5,
+    right: 5,
     zIndex: 1,
   },
   deleteIcon: {
@@ -261,12 +262,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   vehicleImage: {
-    width: 80, // Fixed width
-    height: 80, // Fixed height
+    width: 80,
+    height: 80,
     borderRadius: 8,
     marginRight: 10,
-    resizeMode: "cover", // Crops the sides if necessary to fill the container
-    backgroundColor: "#f0f0f0", // Adds a background color for better contrast
+    resizeMode: "cover",
+    backgroundColor: "#f0f0f0",
   },
   vehicleInfo: {
     flex: 1,
@@ -328,12 +329,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
     paddingVertical: 5,
-    width: "100%", // Match the width of other inputs
+    width: "100%",
   },
   etiquetaOption: {
     alignItems: "center",
     justifyContent: "center",
-    width: 50, // Reduced width to align with other inputs
+    width: 50,
     padding: 5,
     borderRadius: 5,
     borderWidth: 1,
@@ -345,13 +346,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#e6f7ff",
   },
   etiquetaImage: {
-    width: 35, // Reduced size to fit better
+    width: 35,
     height: 35,
     resizeMode: "contain",
     marginBottom: 5,
   },
   etiquetaText: {
-    fontSize: 10, // Reduced font size for better alignment
+    fontSize: 10,
     textAlign: "center",
   },
   addVehicleButton: {
@@ -383,3 +384,12 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
 });
+
+// Gestión de vehículos que el usuario desea guardar.
+// useState para manejar la lista de vehículos, y estados para el modal
+// addVehicle: añade un nuevo vehículo al array local y persiste en AsyncStorage
+// pickImage: abre la galería para adjuntar imagen del coche
+// Se muestran los vehículos en una lista, cada uno con:
+//   - Matrícula, modelo, etiqueta ambiental
+//   - Imagen por defecto o la elegida por el usuario
+// Un botón "+" permite abrir un modal para crear un vehículo nuevo

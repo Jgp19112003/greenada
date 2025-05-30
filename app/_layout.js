@@ -24,7 +24,7 @@ export default function Layout() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.replace("/"); // Reemplaza el historial y abre Login
+      router.replace("/");
     } catch (error) {
       console.error("Error signing out:", error);
     }

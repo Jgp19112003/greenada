@@ -20,10 +20,9 @@ export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isResetPassword, setIsResetPassword] = useState(false); // New state for reset password
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const router = useRouter();
 
-  // Load email from AsyncStorage on mount
   useEffect(() => {
     const loadEmail = async () => {
       try {
@@ -36,7 +35,6 @@ export function Login() {
     loadEmail();
   }, []);
 
-  // Save email to AsyncStorage whenever it changes
   useEffect(() => {
     const saveEmail = async () => {
       try {
@@ -62,7 +60,7 @@ export function Login() {
   const resetPassword = async () => {
     try {
       await sendPasswordResetEmail(auth, email);
-      setIsResetPassword(false); // Return to login form
+      setIsResetPassword(false);
       alert("¡Enviado!\nRevisa tu correo para restablecer la contraseña.");
     } catch (error) {
       if (error?.code === "auth/invalid-email") {
@@ -84,7 +82,13 @@ export function Login() {
     );
   }
 
+  // Pantalla de inicio de sesión de la aplicación.
+  // useState para manejar email y contraseña introducidos por el usuario
+  // Botón que llama a signIn:
+  //   - Verifica credenciales con Firebase Authentication
+  //   - Maneja errores y redirecciona o muestra mensaje en caso de fallo
   const signIn = async () => {
+    // Inicia sesión con correo y contraseña
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.replace("/buscar");

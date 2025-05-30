@@ -74,8 +74,11 @@ export function Buscar() {
     return mat.replace(/\s+/g, "").substr(4);
   };
 
+  // Función que maneja la lógica de búsqueda y muestra la etiqueta ambiental
   const handleSearch = () => {
+    // Evita que el teclado se quede abierto
     Keyboard.dismiss();
+    // Si no se selecciona un combustible, muestra alerta
     if (!fuel) {
       Alert.alert(
         "Combustible no seleccionado",
@@ -83,22 +86,25 @@ export function Buscar() {
       );
       return;
     }
-    // Validar formato: 0000XXX o X0000XX
+    // Validación de formato de matrícula con dos patrones
     const pattern1 = /^[0-9]{4}[A-Z]{3}$/;
     const pattern2 = /^[A-Z]{1}[0-9]{4}[A-Z]{2}$/;
     if (!pattern1.test(searchText) && !pattern2.test(searchText)) {
       Alert.alert("Formato no válido", "El formato debe ser 0000XXX o X0000XX");
       return;
     }
+    // Se normaliza el texto y se obtiene la serie de la matrícula
     const normalizedSearch = searchText.replace(/\s+/g, "");
     const plateSeries = getSeries(normalizedSearch);
 
     const record = correspondencias.find((rec) => {
+      // Filtra según el rango de matrículas en correspondencias.json
       const firstSeries = getSeries(rec.primera);
       const lastSeries = getSeries(rec.ultima);
       return firstSeries <= plateSeries && plateSeries <= lastSeries;
     });
 
+    // Si se encuentra un registro, define la etiqueta en base al combustible y fecha
     if (record) {
       let etiqueta = "No clasificado";
       const regDate = parseMesAnio(record.mesAnio);
@@ -126,7 +132,11 @@ export function Buscar() {
       }
 
       setHistory([
-        { matricula: searchText, etiqueta, year: regDate.getFullYear() }, // Add year to history
+        {
+          matricula: searchText,
+          etiqueta,
+          mesAnio: record.mesAnio, // store the raw string
+        },
         ...history,
       ]);
     } else {
@@ -234,7 +244,7 @@ export function Buscar() {
                     ? require("../assets/distintivo_B.png")
                     : item.etiqueta === "C"
                     ? require("../assets/distintivo_C.png")
-                    : require("../assets/distintivo_ECO.png") // Add ECO label image
+                    : require("../assets/distintivo_ECO.png")
                 }
                 style={styles.distintiveImage}
               />
@@ -247,7 +257,7 @@ export function Buscar() {
                 Distintivo Ambiental {item.etiqueta}.
               </Text>{" "}
               Matriculado en{" "}
-              <Text style={{ fontWeight: "bold" }}>{item.year}</Text>.
+              <Text style={{ fontWeight: "bold" }}>{item.mesAnio}</Text>.
             </Text>
             <TouchableOpacity onPress={() => deleteHistoryItem(index)}>
               <Text style={styles.deleteIcon}>✖</Text>
@@ -369,9 +379,9 @@ const styles = StyleSheet.create({
   },
   historyContainer: {
     width: "90%",
-    maxHeight: 335, // previous adjustment
+    maxHeight: 335,
     marginTop: 40,
-    marginBottom: -35, // added margin to finish above the bottom bar
+    marginBottom: -35,
   },
   historyContentContainer: {
     paddingBottom: 20,
@@ -416,3 +426,6 @@ const styles = StyleSheet.create({
     width: 250,
   },
 });
+
+// Comentario detallado: Este componente lee la matrícula introducida y, mediante el archivo correspondencias.json,
+// determina la fecha de matriculación y el distintivo ambiental, guardando el historial en AsyncStorage.
