@@ -10,52 +10,52 @@ import {
   Image,
   Keyboard,
   Pressable,
-  FlatList, // Import FlatList
-} from "react-native"; // Import React Native components
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage for local storage
-import React, { useState, useEffect, useContext } from "react"; // Import React hooks
-import correspondencias from "../assets/correspondencias.json"; // Import JSON file with data
-import { SafeAreaView } from "react-native-safe-area-context"; // Import SafeAreaView for safe UI rendering
-import { ThemeContext } from "../app/_layout"; // Import ThemeContext for dark mode
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useEffect, useContext } from "react";
+import correspondencias from "../assets/correspondencias.json";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemeContext } from "../app/_layout";
 
 export function Buscar() {
-  const { isDarkMode } = useContext(ThemeContext); // Access dark mode state from ThemeContext
-  const [searchText, setSearchText] = useState(""); // State for the search input
-  const [fuel, setFuel] = useState(""); // State for selected fuel type
-  const [fuelModalVisible, setFuelModalVisible] = useState(false); // State for fuel modal visibility
-  const [hybridModalVisible, setHybridModalVisible] = useState(false); // State for hybrid modal visibility
-  const [hybridType, setHybridType] = useState(""); // State for selected hybrid type
-  const [history, setHistory] = useState([]); // State for search history
+  const { isDarkMode } = useContext(ThemeContext);
+  const [searchText, setSearchText] = useState("");
+  const [fuel, setFuel] = useState("");
+  const [fuelModalVisible, setFuelModalVisible] = useState(false);
+  const [hybridModalVisible, setHybridModalVisible] = useState(false);
+  const [hybridType, setHybridType] = useState("");
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    // Load search history from AsyncStorage when the component mounts
     const loadHistory = async () => {
       try {
-        const savedHistory = await AsyncStorage.getItem("history"); // Retrieve history from AsyncStorage
+        const savedHistory = await AsyncStorage.getItem("history");
         if (savedHistory) {
-          setHistory(JSON.parse(savedHistory)); // Parse and set the history
+          setHistory(JSON.parse(savedHistory));
         }
       } catch (error) {
-        console.error("Error loading history:", error); // Log any errors
+        console.error("Error loading history:", error);
       }
     };
     loadHistory();
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
 
   useEffect(() => {
-    // Save search history to AsyncStorage whenever it changes
     const saveHistory = async () => {
       try {
-        await AsyncStorage.setItem("history", JSON.stringify(history)); // Save history as a JSON string
+        await AsyncStorage.setItem("history", JSON.stringify(history));
       } catch (error) {
-        console.error("Error saving history:", error); // Log any errors
+        console.error("Error saving history:", error);
       }
     };
     saveHistory();
-  }, [history]); // Runs whenever the `history` state changes
+  }, [history]);
 
   const parseMesAnio = (mesAnio) => {
-    // Parse a date string in the format "mes/año" into a JavaScript Date object
     const meses = {
       ene: 0,
       feb: 1,
@@ -70,22 +70,15 @@ export function Buscar() {
       nov: 10,
       dic: 11,
     };
-
-    const [mes, anio] = mesAnio.toLowerCase().split("/"); // Split the string into month and year
-    const mesAbreviado = mes.substring(0, 3); // Get the first three letters of the month
-    return new Date(parseInt(anio), meses[mesAbreviado], 1); // Return a Date object
+    const [mes, anio] = mesAnio.toLowerCase().split("/");
+    const mesAbreviado = mes.substring(0, 3);
+    return new Date(parseInt(anio), meses[mesAbreviado], 1);
   };
 
-  const getSeries = (mat) => {
-    // Extract the series part of a license plate
-    return mat.replace(/\s+/g, "").substr(4); // Remove spaces and get the substring starting at index 4
-  };
+  const getSeries = (mat) => mat.replace(/\s+/g, "").substr(4);
 
-  // Función que maneja la lógica de búsqueda y muestra la etiqueta ambiental
   const handleSearch = () => {
-    // Evita que el teclado se quede abierto
     Keyboard.dismiss();
-    // Si no se selecciona un combustible, muestra alerta
     if (!fuel) {
       Alert.alert(
         "Combustible no seleccionado",
@@ -93,61 +86,42 @@ export function Buscar() {
       );
       return;
     }
-    // Validación de formato de matrícula con dos patrones
+
     const pattern1 = /^[0-9]{4}[A-Z]{3}$/;
     const pattern2 = /^[A-Z]{1}[0-9]{4}[A-Z]{2}$/;
     if (!pattern1.test(searchText) && !pattern2.test(searchText)) {
       Alert.alert("Formato no válido", "El formato debe ser 0000XXX");
       return;
     }
-    // Se normaliza el texto y se obtiene la serie de la matrícula
+
     const normalizedSearch = searchText.replace(/\s+/g, "");
     const plateSeries = getSeries(normalizedSearch);
 
     const record = correspondencias.find((rec) => {
-      // Filtra según el rango de matrículas en correspondencias.json
       const firstSeries = getSeries(rec.primera);
       const lastSeries = getSeries(rec.ultima);
       return firstSeries <= plateSeries && plateSeries <= lastSeries;
     });
 
-    // Si se encuentra un registro, define la etiqueta en base al combustible y fecha
     if (record) {
       let etiqueta = "No clasificado";
       const regDate = parseMesAnio(record.mesAnio);
 
       if (fuel === "Gasolina") {
-        // Si el combustible es gasolina
-        if (regDate >= new Date(2006, 0, 1)) {
-          // Si la fecha de registro es posterior o igual a enero de 2006
-          etiqueta = "C"; // Asigna la etiqueta "C"
-        } else if (regDate >= new Date(2001, 0, 1)) {
-          // Si la fecha de registro es posterior o igual a enero de 2001
-          etiqueta = "B"; // Asigna la etiqueta "B"
-        }
+        if (regDate >= new Date(2006, 0, 1)) etiqueta = "C";
+        else if (regDate >= new Date(2001, 0, 1)) etiqueta = "B";
       } else if (fuel === "Diesel") {
-        // Si el combustible es diésel
-        if (regDate >= new Date(2015, 8, 1)) {
-          // Si la fecha de registro es posterior o igual a septiembre de 2015
-          etiqueta = "C"; // Asigna la etiqueta "C"
-        } else if (regDate >= new Date(2006, 0, 1)) {
-          // Si la fecha de registro es posterior o igual a enero de 2006
-          etiqueta = "B"; // Asigna la etiqueta "B"
-        }
+        if (regDate >= new Date(2015, 8, 1)) etiqueta = "C";
+        else if (regDate >= new Date(2006, 0, 1)) etiqueta = "B";
       } else if (fuel === "Eléctrico") {
-        // Si el combustible es eléctrico
-        etiqueta = "0"; // Asigna la etiqueta "0"
+        etiqueta = "0";
       } else if (fuel === "Híbrido") {
-        // Si el combustible es híbrido
-        if (hybridType === "Enchufable con autonomía >=40km") {
-          // Si el híbrido es enchufable con autonomía mayor o igual a 40 km
-          etiqueta = "0"; // Asigna la etiqueta "0"
-        } else if (
+        if (hybridType === "Enchufable con autonomía >=40km") etiqueta = "0";
+        else if (
           hybridType === "Enchufable con autonomía <40km" ||
           hybridType === "No enchufable"
-        ) {
-          etiqueta = "ECO"; // Asigna la etiqueta "ECO"
-        }
+        )
+          etiqueta = "ECO";
       }
 
       if (etiqueta !== "No clasificado") {
@@ -155,7 +129,7 @@ export function Buscar() {
           {
             matricula: normalizedSearch,
             etiqueta,
-            mesAnio: record.mesAnio, // store the raw string
+            mesAnio: record.mesAnio,
           },
           ...history,
         ]);
@@ -171,6 +145,7 @@ export function Buscar() {
         "No se encontró la matrícula en la tabla de correspondencias."
       );
     }
+
     setSearchText("");
   };
 
@@ -179,7 +154,6 @@ export function Buscar() {
   };
 
   const fuelOptions = ["Gasolina", "Diesel", "Híbrido", "Eléctrico"];
-
   const hybridOptions = [
     "No enchufable",
     "Enchufable con autonomía <40km",
@@ -198,183 +172,209 @@ export function Buscar() {
 
   return (
     <SafeAreaView
-      style={[styles.container, isDarkMode && styles.darkContainer]} // Apply dark mode styles
+      style={[styles.container, isDarkMode && styles.darkContainer]}
     >
-      <Text
-        style={[styles.headerText, isDarkMode && styles.darkHeaderText]} // Apply dark mode styles
-        numberOfLines={1}
-      >
-        Introduce matrícula a consultar
-      </Text>
-      <Text
-        style={[styles.subHeaderText, isDarkMode && styles.darkSubHeaderText]}
-        numberOfLines={1}
-      >
-        (0000XXX)
-      </Text>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={[styles.input, isDarkMode && styles.darkInput]}
-          placeholder="0000XXX"
-          placeholderTextColor={isDarkMode ? "#aaa" : "#888"}
-          value={searchText}
-          onChangeText={(text) => setSearchText(text.toUpperCase())}
-          onSubmitEditing={handleSearch}
-        />
-      </View>
-      <TouchableOpacity
-        style={[
-          styles.input,
-          isDarkMode && styles.darkInput,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-        onPress={() => setFuelModalVisible(true)}
-      >
-        <Text
-          style={{
-            textAlign: "center",
-            fontSize: 18,
-            color: fuel ? (isDarkMode ? "#fff" : "#000") : "#888",
-          }}
-        >
-          {fuel || "Selecciona combustible"}
-        </Text>
-      </TouchableOpacity>
-      {fuel === "Híbrido" && (
-        <TouchableOpacity
-          style={[
-            styles.input,
-            isDarkMode && styles.darkInput,
-            { justifyContent: "center", alignItems: "center" },
-          ]}
-          onPress={() => setHybridModalVisible(true)}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, width: "100%", alignItems: "center" }}
         >
           <Text
-            style={{
-              textAlign: "center",
-              fontSize: 18,
-              color: hybridType ? (isDarkMode ? "#fff" : "#000") : "#888",
-            }}
+            style={[styles.headerText, isDarkMode && styles.darkHeaderText]}
+            numberOfLines={1}
           >
-            {hybridType || "Selecciona tipo de híbrido"}
+            Introduce matrícula a consultar
           </Text>
-        </TouchableOpacity>
-      )}
-      <TouchableOpacity
-        style={[styles.button, isDarkMode && styles.darkButton]}
-        onPress={handleSearch}
-      >
-        <Text style={[styles.buttonText, isDarkMode && styles.darkButtonText]}>
-          Consultar
-        </Text>
-      </TouchableOpacity>
-      <FlatList
-        style={[
-          styles.historyContainer,
-          isDarkMode && styles.darkHistoryContainer,
-        ]}
-        contentContainerStyle={styles.historyContentContainer}
-        data={history} // Pass the history array as data
-        keyExtractor={(item, index) => index.toString()} // Unique key for each item
-        renderItem={({ item, index }) => (
-          <View
-            style={[styles.historyItem, isDarkMode && styles.darkHistoryItem]}
+          <Text
+            style={[
+              styles.subHeaderText,
+              isDarkMode && styles.darkSubHeaderText,
+            ]}
+            numberOfLines={1}
           >
-            {item.etiqueta !== "No clasificado" && (
-              <Image
-                source={
-                  item.etiqueta === "0"
-                    ? require("../assets/distintivo_0.png")
-                    : item.etiqueta === "B"
-                    ? require("../assets/distintivo_B.png")
-                    : item.etiqueta === "C"
-                    ? require("../assets/distintivo_C.png")
-                    : require("../assets/distintivo_ECO.png")
-                }
-                style={styles.distintiveImage}
-              />
-            )}
+            (0000XXX)
+          </Text>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={[styles.input, isDarkMode && styles.darkInput]}
+              placeholder="0000XXX"
+              placeholderTextColor={isDarkMode ? "#aaa" : "#888"}
+              value={searchText}
+              onChangeText={(text) => setSearchText(text.toUpperCase())}
+              onSubmitEditing={handleSearch}
+            />
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.input,
+              isDarkMode && styles.darkInput,
+              { justifyContent: "center", alignItems: "center" },
+            ]}
+            onPress={() => setFuelModalVisible(true)}
+          >
             <Text
-              style={[styles.historyText, isDarkMode && styles.darkHistoryText]}
+              style={{
+                fontSize: 18,
+                color: fuel ? (isDarkMode ? "#fff" : "#000") : "#888",
+              }}
             >
-              El vehículo{" "}
-              <Text style={{ fontWeight: "bold" }}>{item.matricula}</Text>{" "}
-              cumple con los requisitos para obtener el{" "}
-              <Text style={{ fontWeight: "bold" }}>
-                Distintivo Ambiental {item.etiqueta}.
-              </Text>{" "}
-              Matriculado en{" "}
-              <Text style={{ fontWeight: "bold" }}>{item.mesAnio}</Text>.
+              {fuel || "Selecciona combustible"}
             </Text>
-            <TouchableOpacity onPress={() => deleteHistoryItem(index)}>
+          </TouchableOpacity>
+          {fuel === "Híbrido" && (
+            <TouchableOpacity
+              style={[
+                styles.input,
+                isDarkMode && styles.darkInput,
+                { justifyContent: "center", alignItems: "center" },
+              ]}
+              onPress={() => setHybridModalVisible(true)}
+            >
               <Text
-                style={[styles.deleteIcon, isDarkMode && styles.darkDeleteIcon]}
+                style={{
+                  fontSize: 18,
+                  color: hybridType ? (isDarkMode ? "#fff" : "#000") : "#888",
+                }}
               >
-                ✖
+                {hybridType || "Selecciona tipo de híbrido"}
               </Text>
             </TouchableOpacity>
-          </View>
-        )}
-      />
-      {/* Reemplaza el modal de combustible */}
-      <Modal visible={fuelModalVisible} transparent animationType="slide">
-        <Pressable
-          style={styles.modalBackground}
-          onPress={() => setFuelModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            {fuelOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => handleFuelSelect(option)}
-                style={{ padding: 10 }}
-              >
-                <Text style={{ fontSize: 20, textAlign: "center" }}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              onPress={() => setFuelModalVisible(false)}
-              style={{ padding: 10, marginTop: 10 }}
+          )}
+          <TouchableOpacity
+            style={[styles.button, isDarkMode && styles.darkButton]}
+            onPress={handleSearch}
+          >
+            <Text
+              style={[styles.buttonText, isDarkMode && styles.darkButtonText]}
             >
-              <Text style={{ fontSize: 16, textAlign: "center", color: "red" }}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
+              Consultar
+            </Text>
+          </TouchableOpacity>
 
-      {/* Reemplaza el modal de híbrido */}
-      <Modal visible={hybridModalVisible} transparent animationType="slide">
-        <Pressable
-          style={styles.modalBackground}
-          onPress={() => setHybridModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            {hybridOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => handleHybridSelect(option)}
-                style={{ padding: 10 }}
+          <FlatList
+            data={history}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => (
+              <View
+                style={[
+                  styles.historyItem,
+                  isDarkMode && styles.darkHistoryItem,
+                ]}
               >
-                <Text style={{ fontSize: 20, textAlign: "center" }}>
-                  {option}
+                {item.etiqueta !== "No clasificado" && (
+                  <Image
+                    source={
+                      item.etiqueta === "0"
+                        ? require("../assets/distintivo_0.png")
+                        : item.etiqueta === "B"
+                        ? require("../assets/distintivo_B.png")
+                        : item.etiqueta === "C"
+                        ? require("../assets/distintivo_C.png")
+                        : require("../assets/distintivo_ECO.png")
+                    }
+                    style={styles.distintiveImage}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.historyText,
+                    isDarkMode && styles.darkHistoryText,
+                  ]}
+                >
+                  El vehículo{" "}
+                  <Text style={{ fontWeight: "bold" }}>{item.matricula}</Text>{" "}
+                  cumple con los requisitos para obtener el{" "}
+                  <Text style={{ fontWeight: "bold" }}>
+                    Distintivo Ambiental {item.etiqueta}
+                  </Text>
+                  . Matriculado en{" "}
+                  <Text style={{ fontWeight: "bold" }}>{item.mesAnio}</Text>.
                 </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              onPress={() => setHybridModalVisible(false)}
-              style={{ padding: 10, marginTop: 10 }}
+                <TouchableOpacity onPress={() => deleteHistoryItem(index)}>
+                  <Text
+                    style={[
+                      styles.deleteIcon,
+                      isDarkMode && styles.darkDeleteIcon,
+                    ]}
+                  >
+                    ✖
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            style={[
+              styles.historyContainer,
+              isDarkMode && styles.darkHistoryContainer,
+            ]}
+            contentContainerStyle={{ paddingBottom: 100, flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          />
+
+          {/* Modal combustible */}
+          <Modal visible={fuelModalVisible} transparent animationType="slide">
+            <Pressable
+              style={styles.modalBackground}
+              onPress={() => setFuelModalVisible(false)}
             >
-              <Text style={{ fontSize: 16, textAlign: "center", color: "red" }}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
+              <View style={styles.modalContainer}>
+                {fuelOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleFuelSelect(option)}
+                    style={{ padding: 10 }}
+                  >
+                    <Text style={{ fontSize: 20, textAlign: "center" }}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => setFuelModalVisible(false)}
+                  style={{ padding: 10, marginTop: 10 }}
+                >
+                  <Text
+                    style={{ fontSize: 16, textAlign: "center", color: "red" }}
+                  >
+                    Cancelar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Modal>
+
+          {/* Modal híbrido */}
+          <Modal visible={hybridModalVisible} transparent animationType="slide">
+            <Pressable
+              style={styles.modalBackground}
+              onPress={() => setHybridModalVisible(false)}
+            >
+              <View style={styles.modalContainer}>
+                {hybridOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleHybridSelect(option)}
+                    style={{ padding: 10 }}
+                  >
+                    <Text style={{ fontSize: 20, textAlign: "center" }}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => setHybridModalVisible(false)}
+                  style={{ padding: 10, marginTop: 10 }}
+                >
+                  <Text
+                    style={{ fontSize: 16, textAlign: "center", color: "red" }}
+                  >
+                    Cancelar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Modal>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }
@@ -410,7 +410,6 @@ const styles = StyleSheet.create({
   darkSubHeaderText: {
     color: "#aaa",
   },
-  searchContainer: {},
   input: {
     width: 250,
     height: 50,
@@ -451,13 +450,11 @@ const styles = StyleSheet.create({
   },
   historyContainer: {
     width: "90%",
-    maxHeight: 335,
-    marginTop: 40,
-    marginBottom: -35,
-    backgroundColor: "transparent", // Match the background color
+    marginTop: 20,
+    backgroundColor: "transparent",
   },
   darkHistoryContainer: {
-    backgroundColor: "transparent", // Match the background color
+    backgroundColor: "transparent",
   },
   historyItem: {
     flexDirection: "row",
@@ -508,10 +505,4 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: 250,
   },
-  darkModalContainer: {
-    backgroundColor: "#222",
-  },
 });
-
-// Comentario detallado: Este componente lee la matrícula introducida y, mediante el archivo correspondencias.json,
-// determina la fecha de matriculación y el distintivo ambiental, guardando el historial en AsyncStorage.
