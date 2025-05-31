@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 5, // Bordes redondeados
     alignSelf: "flex-start", // Alineación al inicio
+    margin: 10,
   },
   payButtonText: {
     color: "#fff", // Texto blanco

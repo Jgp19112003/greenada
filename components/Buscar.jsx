@@ -10,6 +10,7 @@ import {
   Image,
   Keyboard,
   Pressable,
+  FlatList, // Import FlatList
 } from "react-native"; // Import React Native components
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage for local storage
 import React, { useState, useEffect, useContext } from "react"; // Import React hooks
@@ -148,14 +149,22 @@ export function Buscar() {
           etiqueta = "ECO"; // Asigna la etiqueta "ECO"
         }
       }
-      setHistory([
-        {
-          matricula: normalizedSearch,
-          etiqueta,
-          mesAnio: record.mesAnio, // store the raw string
-        },
-        ...history,
-      ]);
+
+      if (etiqueta !== "No clasificado") {
+        setHistory([
+          {
+            matricula: normalizedSearch,
+            etiqueta,
+            mesAnio: record.mesAnio, // store the raw string
+          },
+          ...history,
+        ]);
+      } else {
+        Alert.alert(
+          "Sin distintivo",
+          "El vehículo no tiene distintivo medioambiental."
+        );
+      }
     } else {
       Alert.alert(
         "Matrícula no encontrada",
@@ -259,18 +268,16 @@ export function Buscar() {
           Consultar
         </Text>
       </TouchableOpacity>
-      <ScrollView
+      <FlatList
         style={[
           styles.historyContainer,
           isDarkMode && styles.darkHistoryContainer,
         ]}
         contentContainerStyle={styles.historyContentContainer}
-        scrollEnabled={true}
-        keyboardShouldPersistTaps="handled"
-      >
-        {history.map((item, index) => (
+        data={history} // Pass the history array as data
+        keyExtractor={(item, index) => index.toString()} // Unique key for each item
+        renderItem={({ item, index }) => (
           <View
-            key={index}
             style={[styles.historyItem, isDarkMode && styles.darkHistoryItem]}
           >
             {item.etiqueta !== "No clasificado" && (
@@ -307,8 +314,8 @@ export function Buscar() {
               </Text>
             </TouchableOpacity>
           </View>
-        ))}
-      </ScrollView>
+        )}
+      />
       {/* Reemplaza el modal de combustible */}
       <Modal visible={fuelModalVisible} transparent animationType="slide">
         <Pressable
