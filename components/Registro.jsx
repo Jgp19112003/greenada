@@ -83,65 +83,62 @@ export function Registro() {
   // Renderiza la interfaz de usuario
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      {" "}
-      {/* Oculta el teclado al tocar fuera */}
-      <KeyboardAwareScrollView
-        style={{ flex: 1, backgroundColor: "black" }} // Estilo del contenedor
-        contentContainerStyle={{ flexGrow: 1, backgroundColor: "black" }}
-        keyboardShouldPersistTaps="handled" // Permite que los toques pasen al teclado
-      >
-        <View style={[styles.container, isDarkMode && styles.darkContainer]}>
-          {" "}
-          {/* Contenedor principal */}
-          {/* Logo de la aplicación */}
-          <Image source={require("../assets/logo.png")} style={styles.logo} />
-          <View style={styles.innerContainer}>
-            {" "}
-            {/* Contenedor interno */}
-            <Text style={styles.header}>Registro</Text>{" "}
-            {/* Título del formulario */}
-            {/* Campo de entrada para el nombre */}
-            <TextInput
-              style={[styles.input, isDarkMode && styles.darkInput]}
-              placeholder="Nombre"
-              placeholderTextColor="#666"
-              value={nombre}
-              onChangeText={setNombre}
-            />
-            {/* Campo de entrada para el teléfono */}
-            <TextInput
-              style={[styles.input, isDarkMode && styles.darkInput]}
-              placeholder="Teléfono"
-              keyboardType="phone-pad"
-              placeholderTextColor="#666"
-              value={telefono}
-              onChangeText={setTelefono}
-            />
-            {/* Campo de entrada para el correo electrónico */}
-            <TextInput
-              style={[styles.input, isDarkMode && styles.darkInput]}
-              placeholder="Correo electrónico"
-              keyboardType="email-address"
-              placeholderTextColor="#666"
-              value={email}
-              onChangeText={setEmail}
-            />
-            {/* Campo de entrada para la contraseña */}
-            <TextInput
-              style={[styles.input, isDarkMode && styles.darkInput]}
-              placeholder="Contraseña"
-              secureTextEntry
-              placeholderTextColor="#666"
-              value={password}
-              onChangeText={setPassword}
-            />
-            {/* Botón para enviar el formulario */}
-            <Pressable style={styles.button} onPress={signUp}>
-              <Text style={styles.buttonText}>Registrarse</Text>
-            </Pressable>
+      <View style={{ flex: 1 }}>
+        <KeyboardAwareScrollView
+          style={{ flex: 1, backgroundColor: "black" }} // Estilo del contenedor
+          contentContainerStyle={{ flexGrow: 1, backgroundColor: "black" }}
+          keyboardShouldPersistTaps="handled" // Permite que los toques pasen al teclado
+        >
+          <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+            {/* Contenedor principal */}
+            {/* Logo de la aplicación */}
+            <Image source={require("../assets/logo.png")} style={styles.logo} />
+            <View style={styles.innerContainer}>
+              {/* Contenedor interno */}
+              <Text style={styles.header}>Registro</Text>
+              {/* Campo de entrada para el nombre */}
+              <TextInput
+                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                placeholder="Nombre"
+                placeholderTextColor="#666"
+                value={nombre}
+                onChangeText={setNombre}
+              />
+              {/* Campo de entrada para el teléfono */}
+              <TextInput
+                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                placeholder="Teléfono"
+                keyboardType="phone-pad"
+                placeholderTextColor="#666"
+                value={telefono}
+                onChangeText={setTelefono}
+              />
+              {/* Campo de entrada para el correo electrónico */}
+              <TextInput
+                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                placeholder="Correo electrónico"
+                keyboardType="email-address"
+                placeholderTextColor="#666"
+                value={email}
+                onChangeText={setEmail}
+              />
+              {/* Campo de entrada para la contraseña */}
+              <TextInput
+                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                placeholder="Contraseña"
+                secureTextEntry
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+              />
+              {/* Botón para enviar el formulario */}
+              <Pressable style={styles.button} onPress={signUp}>
+                <Text style={styles.buttonText}>Registrarse</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </KeyboardAwareScrollView>
+        </KeyboardAwareScrollView>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
@@ -182,6 +179,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 15,
     color: "#333",
+  },
+  inputTextBlack: {
+    color: "black", // Fuerza el texto a ser negro
   },
   darkInput: {
     color: "#fff",
