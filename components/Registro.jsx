@@ -29,6 +29,10 @@ export function Registro() {
   const [nombre, setNombre] = useState(""); // Estado para el nombre del usuario
   const [telefono, setTelefono] = useState(""); // Estado para el teléfono del usuario
   const [isSubmitting, setIsSubmitting] = useState(false); // Estado para evitar múltiples envíos
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+  const [nombreError, setNombreError] = useState(false);
+  const [telefonoError, setTelefonoError] = useState(false);
 
   // useEffect para cargar datos del usuario desde AsyncStorage al iniciar el componente
   useEffect(() => {
@@ -62,7 +66,38 @@ export function Registro() {
   const signUp = async () => {
     // Evita múltiples envíos si ya se está procesando
     if (isSubmitting) return;
-    setIsSubmitting(true); // Establece el estado de envío en verdadero
+
+    // Reset errors
+    setEmailError(false);
+    setPasswordError(false);
+    setNombreError(false);
+    setTelefonoError(false);
+
+    // Validación de campos vacíos
+    let hasError = false;
+    if (!nombre.trim()) {
+      setNombreError(true);
+      hasError = true;
+    }
+    if (!telefono.trim()) {
+      setTelefonoError(true);
+      hasError = true;
+    }
+    if (!email.trim()) {
+      setEmailError(true);
+      hasError = true;
+    }
+    if (!password.trim()) {
+      setPasswordError(true);
+      hasError = true;
+    }
+    if (hasError) {
+      alert("Por favor, completa todos los campos.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       // Crea un nuevo usuario en Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
@@ -75,8 +110,21 @@ export function Registro() {
       await setDoc(doc(db, "usuarios", user.uid), { nombre, telefono, email });
       router.replace("/buscar"); // Redirige al usuario a la página principal
     } catch (error) {
-      console.error("Error registrando usuario:", error); // Manejo de errores
-      setIsSubmitting(false); // Restablece el estado de envío
+      // Manejo de errores de registro
+      const msg = error?.message || "";
+      if (msg.includes("invalid-email")) {
+        setEmailError(true);
+        alert("Introduce un correo electrónico válido.");
+      } else if (msg.includes("weak-password")) {
+        setPasswordError(true);
+        alert("La contraseña debe tener al menos 6 caracteres.");
+      } else if (msg.includes("email-already-in-use")) {
+        setEmailError(true);
+        alert("Este correo ya está registrado.");
+      } else {
+        alert("Ocurrió un error al registrar el usuario.");
+      }
+      setIsSubmitting(false);
     }
   };
 
@@ -98,7 +146,11 @@ export function Registro() {
               <Text style={styles.header}>Registro</Text>
               {/* Campo de entrada para el nombre */}
               <TextInput
-                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                style={[
+                  styles.input,
+                  styles.inputTextBlack,
+                  nombreError && styles.inputError,
+                ]} // Aplica el nuevo estilo
                 placeholder="Nombre"
                 placeholderTextColor="#666"
                 value={nombre}
@@ -106,7 +158,11 @@ export function Registro() {
               />
               {/* Campo de entrada para el teléfono */}
               <TextInput
-                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                style={[
+                  styles.input,
+                  styles.inputTextBlack,
+                  telefonoError && styles.inputError,
+                ]} // Aplica el nuevo estilo
                 placeholder="Teléfono"
                 keyboardType="phone-pad"
                 placeholderTextColor="#666"
@@ -115,7 +171,11 @@ export function Registro() {
               />
               {/* Campo de entrada para el correo electrónico */}
               <TextInput
-                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                style={[
+                  styles.input,
+                  styles.inputTextBlack,
+                  emailError && styles.inputError,
+                ]} // Aplica el nuevo estilo
                 placeholder="Correo electrónico"
                 keyboardType="email-address"
                 placeholderTextColor="#666"
@@ -124,7 +184,11 @@ export function Registro() {
               />
               {/* Campo de entrada para la contraseña */}
               <TextInput
-                style={[styles.input, styles.inputTextBlack]} // Aplica el nuevo estilo
+                style={[
+                  styles.input,
+                  styles.inputTextBlack,
+                  passwordError && styles.inputError,
+                ]} // Aplica el nuevo estilo
                 placeholder="Contraseña"
                 secureTextEntry
                 placeholderTextColor="#666"
@@ -180,6 +244,9 @@ const styles = StyleSheet.create({
   },
   inputTextBlack: {
     color: "black", // Fuerza el texto a ser negro
+  },
+  inputError: {
+    borderColor: "red",
   },
   darkInput: {
     color: "#fff",

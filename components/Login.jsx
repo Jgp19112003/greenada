@@ -25,6 +25,8 @@ export function Login() {
   const [password, setPassword] = useState(""); // Estado para la contraseña
   const [isLoading, setIsLoading] = useState(true); // Estado para mostrar el indicador de carga
   const [isResetPassword, setIsResetPassword] = useState(false); // Estado para alternar entre login y restablecimiento de contraseña
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
   const router = useRouter(); // Hook para manejar la navegación
   const { isDarkMode } = useContext(ThemeContext); // Obtiene el estado del tema oscuro/claro
 
@@ -95,17 +97,23 @@ export function Login() {
 
   // Función para iniciar sesión
   const signIn = async () => {
+    setEmailError(false);
+    setPasswordError(false);
     try {
-      await signInWithEmailAndPassword(auth, email, password); // Intenta iniciar sesión con Firebase
-      router.replace("/buscar"); // Redirige al usuario
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace("/buscar");
     } catch (error) {
-      // Manejo de errores específicos
-      if (error?.code === "auth/wrong-password") {
-        alert("La contraseña es incorrecta.");
-      } else if (error?.code === "auth/user-not-found") {
-        alert("No se encontró un usuario con este correo.");
-      } else if (error?.code === "auth/invalid-email") {
-        alert("El correo electrónico no es válido.");
+      const msg = error?.message || "";
+      console.log(msg);
+
+      if (msg.includes("invalid-credential")) {
+        alert("El correo electrónico o la contraseña son incorrectos.");
+      } else if (msg.includes("invalid-email")) {
+        setEmailError(true);
+        alert("Introduce un correo electrónico válido.");
+      } else if (msg.includes("missing-password")) {
+        setPasswordError(true);
+        alert("Introduce una contraseña.");
       } else {
         alert("Ocurrió un error al iniciar sesión.");
       }
@@ -128,7 +136,11 @@ export function Login() {
                 <>
                   <Text style={styles.header}>Restablecer Contraseña</Text>
                   <TextInput
-                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    style={[
+                      styles.input,
+                      isDarkMode && styles.darkInput,
+                      emailError && styles.inputError,
+                    ]}
                     placeholder="Correo electrónico"
                     keyboardType="email-address"
                     placeholderTextColor="#666"
@@ -151,7 +163,11 @@ export function Login() {
                 <>
                   <Text style={styles.header}>Iniciar Sesión</Text>
                   <TextInput
-                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    style={[
+                      styles.input,
+                      isDarkMode && styles.darkInput,
+                      emailError && styles.inputError,
+                    ]}
                     placeholder="Correo electrónico"
                     keyboardType="email-address"
                     placeholderTextColor="#666"
@@ -159,7 +175,11 @@ export function Login() {
                     onChangeText={setEmail}
                   />
                   <TextInput
-                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    style={[
+                      styles.input,
+                      isDarkMode && styles.darkInput,
+                      passwordError && styles.inputError,
+                    ]}
                     placeholder="Contraseña"
                     secureTextEntry
                     placeholderTextColor="#666"
@@ -235,6 +255,9 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   darkInput: {},
+  inputError: {
+    borderColor: "red",
+  },
   button: {
     width: "100%",
     height: 50,
