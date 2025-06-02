@@ -152,9 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
     paddingTop: 120,
   },
-  darkContainer: {
-    backgroundColor: "#333",
-  },
+  darkContainer: {},
   innerContainer: {
     width: "90%",
     maxWidth: 400,

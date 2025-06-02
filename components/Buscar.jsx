@@ -20,6 +20,7 @@ import React, { useState, useEffect, useContext } from "react";
 import correspondencias from "../assets/correspondencias.json";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemeContext } from "../app/_layout";
+import { Ionicons } from "@expo/vector-icons"; // Add this import for the info icon
 
 export function Buscar() {
   const { isDarkMode } = useContext(ThemeContext);
@@ -29,6 +30,7 @@ export function Buscar() {
   const [hybridModalVisible, setHybridModalVisible] = useState(false);
   const [hybridType, setHybridType] = useState("");
   const [history, setHistory] = useState([]);
+  const [infoModalVisible, setInfoModalVisible] = useState(false); // State for the info modal
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -174,6 +176,102 @@ export function Buscar() {
     <SafeAreaView
       style={[styles.container, isDarkMode && styles.darkContainer]}
     >
+      {/* Info Icon */}
+      <TouchableOpacity
+        style={styles.infoIcon}
+        onPress={() => setInfoModalVisible(true)}
+      >
+        <Ionicons
+          name="information-circle-outline"
+          size={30}
+          color={isDarkMode ? "#fff" : "#000"}
+        />
+      </TouchableOpacity>
+
+      {/* Info Modal */}
+      <Modal visible={infoModalVisible} transparent animationType="slide">
+        <Pressable
+          style={styles.modalBackground}
+          onPress={() => setInfoModalVisible(false)}
+        >
+          <View style={styles.modalContainerWide}>
+            <ScrollView contentContainerStyle={styles.modalContent}>
+              <View style={styles.modalRow}>
+                <Image
+                  source={require("../assets/distintivo_0.png")}
+                  style={styles.modalImageSmaller}
+                />
+                <Text style={styles.modalText}>
+                  <Text style={{ fontWeight: "bold" }}>
+                    Etiqueta 0 emisiones (Azul):
+                  </Text>{" "}
+                  Para vehículos totalmente eléctricos, eléctricos de autonomía
+                  extendida, híbridos enchufables con ≥40 km de autonomía y
+                  vehículos de pila de combustible.
+                </Text>
+              </View>
+              <View style={styles.modalRow}>
+                <Image
+                  source={require("../assets/distintivo_ECO.png")}
+                  style={styles.modalImageSmaller}
+                />
+                <Text style={styles.modalText}>
+                  <Text style={{ fontWeight: "bold" }}>Etiqueta ECO:</Text> Para
+                  híbridos enchufables con ≤40 km de autonomía, híbridos no
+                  enchufables, y vehículos a gas (GNC, GNL, GLP). Deben cumplir
+                  también los requisitos de la etiqueta C.
+                </Text>
+              </View>
+              <View style={styles.modalRow}>
+                <Image
+                  source={require("../assets/distintivo_C.png")}
+                  style={styles.modalImageSmaller}
+                />
+                <Text style={styles.modalText}>
+                  <Text style={{ fontWeight: "bold" }}>
+                    Etiqueta C (Verde):
+                  </Text>{" "}
+                  Gasolina: Matriculados desde enero de 2006. Diésel: Desde
+                  septiembre de 2015. Vehículos pesados y de más de 8 plazas:
+                  Desde 2014.
+                </Text>
+              </View>
+              <View style={styles.modalRow}>
+                <Image
+                  source={require("../assets/distintivo_B.png")}
+                  style={styles.modalImageSmaller}
+                />
+                <Text style={styles.modalText}>
+                  <Text style={{ fontWeight: "bold" }}>
+                    Etiqueta B (Amarilla):
+                  </Text>{" "}
+                  Gasolina: Matriculados desde enero de 2001. Diésel: Desde
+                  2006. Vehículos pesados y de más de 8 plazas: Desde 2006.
+                </Text>
+              </View>
+              <View style={styles.modalRow}>
+                <Image
+                  source={require("../assets/distintivo_sin.png")}
+                  style={styles.modalImageSmaller}
+                />
+                <Text style={styles.modalText}>
+                  <Text style={{ fontWeight: "bold" }}>Sin etiqueta:</Text>{" "}
+                  Vehículos más contaminantes que no cumplen los requisitos
+                  anteriores (aproximadamente el 50% del parque más antiguo).
+                </Text>
+              </View>
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setInfoModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Main Content */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -504,5 +602,59 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: 250,
+  },
+  modalContainerWide: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: 300, // Increased width
+  },
+  infoIcon: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalContent: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  modalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  modalImageSmall: {
+    width: 50,
+    height: 50,
+    resizeMode: "contain",
+    marginRight: 10,
+  },
+  modalImageSmaller: {
+    width: 40, // Reduced size
+    height: 40, // Reduced size
+    resizeMode: "contain",
+    marginRight: 10,
+  },
+  modalText: {
+    fontSize: 12,
+    flex: 1,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });

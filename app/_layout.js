@@ -77,7 +77,7 @@ export default function Layout() {
         edges={["top", "left", "right"]}
         style={{
           flex: 1,
-          backgroundColor: isDarkMode ? "black" : "white",
+          backgroundColor: isDarkMode ? "#333" : "white",
         }}
       >
         <TouchableWithoutFeedback onPress={closeMenu}>
@@ -85,7 +85,7 @@ export default function Layout() {
             {!isRegistro && isAuthenticated && (
               <View
                 style={{
-                  backgroundColor: isDarkMode ? "black" : "white",
+                  backgroundColor: isDarkMode ? "#333" : "white",
                   height: 55,
                   flexDirection: "row",
                   justifyContent: "flex-end",

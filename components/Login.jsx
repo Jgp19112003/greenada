@@ -208,9 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
     paddingTop: 120,
   },
-  darkContainer: {
-    backgroundColor: "#333",
-  },
+  darkContainer: {},
   innerContainer: {
     width: "90%",
     maxWidth: 400,
@@ -234,11 +232,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 15,
-    color: "#333",
+    color: "#000",
   },
-  darkInput: {
-    color: "#fff",
-  },
+  darkInput: {},
   button: {
     width: "100%",
     height: 50,
